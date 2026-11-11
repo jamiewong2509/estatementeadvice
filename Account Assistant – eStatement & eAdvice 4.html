@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#ffffff">
+<title>Account Assistant – eStatement &amp; eAdvice</title>
+<style>
+:root{--red:#db0011;--bg:#fff;--surface:#fff;--ink:#000;--muted:#444;--line:#cfcfcf;--bot:#fff;--user:#efefef;--chip:#efefef;--ok:#1b6e3c;--err:#b00020;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--app-h:100dvh}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;width:100%;max-width:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "Helvetica Neue",Arial,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:480px;min-width:0;height:100vh;height:-webkit-fill-available;height:var(--app-h);display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+@media (min-width:520px){.app{border-inline:1px solid var(--line)}}
+header{background:var(--surface);border-bottom:3px solid var(--red);padding:calc(10px + var(--sat)) calc(16px + var(--sar)) 10px calc(16px + var(--sal));display:flex;align-items:center;gap:12px;flex:none}
+header b{font-size:16px}
+header small{display:block;color:var(--muted);font-size:12px}
+.back{border:0;background:none;color:#000;padding:4px;display:flex}
+button{font:inherit;cursor:pointer}
+#log{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;width:100%;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:16px calc(clamp(12px,4vw,22px) + var(--sar)) 16px calc(clamp(12px,4vw,22px) + var(--sal));display:flex;flex-direction:column;gap:10px}
+.m,.card,.ckt,.big,.ckl,.crumb,.st,.ttl,.q{overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;min-width:0}
+.m{max-width:88%;padding:10px 13px;border-radius:14px;animation:in .18s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.m,.card{animation:none}}
+.bot{background:var(--bot);border:1px solid var(--line);border-top-left-radius:4px;align-self:flex-start}
+.usr{background:var(--user);color:#000;border:1px solid var(--line);border-top-right-radius:4px;align-self:flex-end}
+.err{border-color:var(--err)}
+.typing{display:flex;gap:4px;padding:12px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{50%{transform:translateY(-4px);opacity:.4}}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;width:100%;max-width:400px}
+.row .q{flex:1 1 120px;min-height:44px;white-space:normal;text-align:center}
+.q{border:1px solid var(--red);background:var(--surface);color:var(--red);padding:10px 14px;border-radius:22px;font-weight:600}
+.q.p{background:var(--red);color:#fff}
+.q:disabled{opacity:.45;cursor:default}
+.q.sel{background:var(--chip);border-color:var(--line);color:#000;opacity:1}
+button:focus-visible,input:focus-visible{outline:3px solid #000;outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;border-top-left-radius:4px;padding:12px 13px;align-self:stretch;width:100%;max-width:100%;display:flex;flex-direction:column;gap:10px;animation:in .18s ease-out}
+.card>label,.card .ttl{font-size:13px;font-weight:600}
+.big{font-size:15px;font-weight:700}
+.decl{font-size:12px;color:var(--muted);margin:0}
+/* Radio list (same row pattern as the checklist in the base design, control on the right) */
+.opts{display:flex;flex-direction:column}
+.opts.scroll{max-height:min(320px,45vh);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;padding:0 10px}
+.ck{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.opts .ck:last-child{border-bottom:0}
+.ckt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ckl{font-size:13px;color:var(--muted)}
+.ck input{-webkit-appearance:radio;width:22px;height:22px;accent-color:var(--red);flex:none;margin:0;cursor:pointer}
+.ck.other .big{font-weight:600}
+.yr{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:10px 0 2px;border-bottom:1px solid var(--line)}
+/* Download box */
+.mp{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);-webkit-appearance:none;appearance:none}
+.mp.open{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.mpt{display:flex;flex-direction:column;min-width:0}
+.mpl{font-size:12px;color:var(--muted)}
+.mpv{font-size:15px;font-weight:700}
+.mpv.ph{font-weight:400;color:var(--muted)}
+.mp .chev{flex:none;color:var(--red)}
+.cal{border:1px solid var(--line);border-radius:10px;padding:10px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cal-h b{font-size:16px}
+.yb{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--red);display:grid;place-items:center;padding:0;-webkit-appearance:none;appearance:none}
+.yb:disabled{color:#c4c4c4;border-color:#eee;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.mo{min-height:44px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-weight:600;font-size:14px;padding:0;-webkit-appearance:none;appearance:none}
+.mo:disabled{color:#bdbdbd;background:#f6f6f6;border-color:#eee;cursor:default}
+.mo.on{background:var(--red);border-color:var(--red);color:#fff}
+.lnk{background:none;border:0;color:var(--red);font-weight:600;text-decoration:underline;padding:6px 0;min-height:36px;align-self:flex-start;font-size:14px;text-align:left}
+.lnk:disabled{opacity:.45;cursor:default}
+.pp{margin:10px 0 0}
+.ol{margin:8px 0;padding-left:22px}
+.ol li{margin:2px 0}
+.pk{display:flex;align-items:center;gap:12px;width:100%;max-width:100%;min-height:56px;text-align:left;background:#fff;border:1.5px solid var(--red);border-radius:12px;padding:12px 14px;color:var(--ink);-webkit-appearance:none;appearance:none}
+.pk:hover:not(:disabled){background:#fff5f5}
+.pk:disabled{opacity:1;border-color:var(--line);cursor:default}
+.pk:disabled .pki,.pk:disabled .pka{color:var(--muted)}
+.pki{flex:none;display:flex;color:var(--red)}
+.pkt{flex:1;min-width:0;font-size:15px;font-weight:600}
+.pka{flex:none;display:flex;color:var(--red)}
+.dlw{align-self:stretch;display:flex;flex-direction:column;gap:6px}
+.dlw .st:empty{display:none}
+/* Bottom sheet, pinned to the bottom of the app */
+.app{position:relative}
+.shbd{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .2s;z-index:20}
+.shbd.on{opacity:1}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);max-height:88%;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .22s ease-out}
+.sheet.on{transform:none}
+@media (prefers-reduced-motion:reduce){.sheet,.shbd{transition:none}}
+.shg{width:40px;height:4px;border-radius:2px;background:#d5d5d5;margin:8px auto 0;flex:none}
+.shh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px calc(16px + var(--sar)) 4px calc(16px + var(--sal));flex:none}
+.sht{font-size:17px;font-weight:700;margin:0}
+.shx{width:40px;height:40px;border:0;background:none;color:var(--muted);display:grid;place-items:center;padding:0;margin-right:-8px}
+.shb{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px calc(16px + var(--sar)) 8px calc(16px + var(--sal));flex:1;min-height:0}
+.shn{font-size:13px;color:var(--muted);margin:12px 0 0}
+.shf{padding:10px calc(16px + var(--sar)) calc(12px + var(--sab)) calc(16px + var(--sal));border-top:1px solid var(--line);flex:none}
+.shf .q{width:100%;min-height:48px;font-size:16px}
+.st{font-size:12px;margin:0;color:var(--muted)}
+.st.good{color:var(--ok);font-weight:600}.st.bad{color:var(--err)}
+/* Path box */
+.path{display:flex;flex-direction:column;gap:8px}
+.crumb{font-size:14px;font-weight:600;background:var(--chip);border-radius:8px;padding:9px 11px}
+.chips{display:flex;gap:8px;padding:6px calc(16px + var(--sar)) 0 calc(16px + var(--sal));flex:none}
+.chips::-webkit-scrollbar{display:none}
+.chips .q{flex:1 1 0;min-width:0;padding:8px 12px;font-size:14px;font-weight:600;min-height:40px}
+form.in{display:flex;gap:8px;align-items:center;padding:10px calc(16px + var(--sar)) calc(10px + var(--sab)) calc(16px + var(--sal));background:var(--surface);border-top:1px solid var(--line);flex:none}
+form.in input{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:22px;padding:11px 14px}
+.ic{width:42px;height:42px;border-radius:50%;border:0;background:var(--red);color:#fff;display:grid;place-items:center;flex:none;padding:0}
+.ghost{background:none;border:0;color:var(--muted);font-size:12px;margin-left:auto;text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <button class="back" type="button" aria-label="Back to home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <div><b>Account Assistant</b><small>Virtual Assistant</small></div>
+    <button class="ghost" id="restart" type="button">Restart</button>
+  </header>
+  <main id="log" aria-live="polite"></main>
+  <div class="chips"><button class="q" id="chipS" type="button">Statement</button><button class="q" id="chipA" type="button">Advice</button></div>
+  <div class="shbd" id="sheetBd" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle" hidden>
+    <div class="shg" aria-hidden="true"></div>
+    <div class="shh"><h2 class="sht" id="shTitle">Pick a period</h2><button type="button" class="shx" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="shb">
+      <div class="cal-h"><button type="button" class="yb" data-y="-1" aria-label="Previous year"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><b class="yl" aria-live="polite"></b><button type="button" class="yb" data-y="1" aria-label="Next year"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button></div>
+      <div class="grid"></div>
+      <p class="shn"></p>
+    </div>
+    <div class="shf"><button type="button" class="q p" data-ok disabled>Confirm</button></div>
+  </div>
+  <form class="in" id="form"><input id="txt" autocomplete="off" placeholder="Type a message…" aria-label="Type a message"><button class="ic" title="Send" aria-label="Send"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></form>
+</div>
+
+<script>
+/* ===== Demo data ===== */
+const ACCOUNTS = [
+  {id:"int", name:"Integrated Account", no:"012-345678-838", ccy:"HKD", st:true, adv:true, months:84},
+  {id:"sav", name:"HKD Savings Account", no:"012-345678-001", ccy:"HKD", st:true, adv:true, months:84},
+  {id:"cur", name:"HKD Current Account", no:"012-345678-002", ccy:"HKD", st:true, adv:true, months:84},
+  {id:"fcy", name:"Foreign Currency Savings", no:"012-345678-833", ccy:"USD", st:true, adv:true, months:24},
+  {id:"cc",  name:"Credit Card", no:"4512 •••• •••• 4821", ccy:"HKD", st:true, adv:false, months:24}
+];
+const STMT_TYPES = {
+  int:["Consolidated monthly statement","HKD savings sub-account statement","Foreign currency sub-account statement","Time deposit statement"],
+  sav:["Savings account statement"],
+  cur:["Current account statement","Cheque clearing statement"],
+  fcy:["Foreign currency savings statement"],
+  cc: ["Credit card monthly statement"]
+};
+const ADV_TYPES = {
+  int:["Credit advice (incoming funds)","Debit advice (outgoing funds)","Outward remittance advice","Time deposit confirmation advice"],
+  sav:["Credit advice (incoming funds)","Debit advice (outgoing funds)","Interest advice"],
+  cur:["Credit advice (incoming funds)","Debit advice (outgoing funds)","Cheque return advice"],
+  fcy:["Inward remittance advice","Outward remittance advice","Foreign exchange advice"]
+};
+/* "Other document" clarification → where to view it (paths are placeholders to confirm) */
+const OTHER_DOCS = {
+  statement:[
+    {k:/annual|tax|year/i, label:"Annual summary / tax statement", page:"Annual summaries", path:"More &gt; Documents &gt; Annual summaries"},
+    {k:/invest|secur|stock|fund|wealth/i, label:"Investment statement", page:"Investment documents", path:"Wealth &gt; Investment documents &gt; Statements"},
+    {k:/insur|mpf|pension/i, label:"Insurance or MPF statement", page:"Insurance &amp; MPF documents", path:"More &gt; Insurance &amp; MPF &gt; Documents"},
+    {k:/loan|mortgage/i, label:"Loan or mortgage statement", page:"Loan documents", path:"Borrow &gt; My loans &gt; Statements"}
+  ],
+  advice:[
+    {k:/invest|trade|secur|stock|fund|contract|note/i, label:"Investment trade confirmation", page:"Investment documents", path:"Wealth &gt; Investment documents &gt; Trade confirmations"},
+    {k:/cheque|check|image/i, label:"Cheque image", page:"Cheque images", path:"Accounts &gt; Account details &gt; Cheque images"},
+    {k:/loan|mortgage|repay/i, label:"Loan repayment advice", page:"Loan documents", path:"Borrow &gt; My loans &gt; Repayment advices"},
+    {k:/card|credit card/i, label:"Credit card payment advice", page:"Card documents", path:"Cards &gt; Card details &gt; Documents"}
+  ]
+};
+const REQ_PAGE = {page:"Request for Bank Account Letters / Transaction Record", path:"More &gt; Account services &gt; Request for Bank Account Letters / Transaction Record"};
+
+/* ===== Chat helpers (same as base design) ===== */
+const $ = s => document.querySelector(s);
+const log = $("#log"), txt = $("#txt");
+let state = "", busy = false, mode = "statement", pick = {}, activeCard = null, activeOpts = [];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const scroll = () => { try { log.scrollTo({top: log.scrollHeight, behavior: "smooth"}); } catch(e){ log.scrollTop = log.scrollHeight; } };
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function add(cls, html){ const d = document.createElement("div"); d.className = "m " + cls; d.innerHTML = html; log.appendChild(d); scroll(); return d; }
+const user = t => add("usr", esc(t));
+async function bot(html, cls = ""){
+  busy = true;
+  const t = add("bot typing", "<i></i><i></i><i></i>");
+  await wait(650); t.remove(); busy = false;
+  return add("bot " + cls, html);
+}
+function quick(opts){
+  const row = document.createElement("div"); row.className = "row";
+  opts.forEach(o => {
+    const b = document.createElement("button"); b.type = "button";
+    b.className = "q" + (o.p ? " p" : ""); b.textContent = o.label;
+    b.onclick = () => { if (busy) return; row.querySelectorAll("button").forEach(x => x.disabled = true); b.classList.add("sel"); user(o.echo || o.label); o.go(); };
+    row.appendChild(b);
+  });
+  log.appendChild(row); scroll();
+}
+function lock(el){ el.querySelectorAll("button,input").forEach(x => x.disabled = true); }
+function card(html){ const c = document.createElement("div"); c.className = "card"; c.innerHTML = html; log.appendChild(c); scroll(); return c; }
+function lockAll(){ log.querySelectorAll(":scope > .row button").forEach(x => x.disabled = true); if (activeCard) lock(activeCard); }
+
+const doc = () => mode === "statement" ? "eStatement" : "eAdvice";
+const docs = () => mode === "statement" ? "eStatements" : "eAdvices";
+
+/* Radio card: one choice only, then Continue.
+   items: [{v, title, sub, group}] ; an "Other" row is appended when allowOther. */
+let gid = 0;
+function radioCard(heading, items, {allowOther, scrollable, onPick}){
+  const name = "r" + (++gid);
+  let lastGroup = null;
+  const rows = items.map((it, i) => {
+    const g = it.group && it.group !== lastGroup ? `<div class="yr">${esc(it.group)}</div>` : "";
+    lastGroup = it.group;
+    return g + `<label class="ck"><span class="ckt">${it.sub ? `<span class="ckl">${esc(it.sub)}</span>` : ""}<span class="big">${esc(it.title)}</span></span><input type="radio" name="${name}" value="${i}"></label>`;
+  }).join("") + (allowOther ? `<label class="ck other"><span class="ckt"><span class="big">Other</span><span class="ckl">I can't find what I need in this list</span></span><input type="radio" name="${name}" value="other"></label>` : "");
+  const c = card(`<span class="ttl">${heading}</span><div class="opts${scrollable ? " scroll" : ""}" role="radiogroup" aria-label="${esc(heading)}">${rows}</div><button class="q p" type="button" data-go disabled>Continue</button>`);
+  const radios = [...c.querySelectorAll("input")], go = c.querySelector("[data-go]");
+  radios.forEach(r => r.onchange = () => { go.disabled = false; });
+  const finish = val => {
+    lock(c); activeCard = null;
+    if (val === "other"){ user("Other"); return onPick(null); }
+    const it = items[val]; user(it.echo || it.title); onPick(it);
+  };
+  go.onclick = () => { const r = radios.find(x => x.checked); if (r) finish(r.value); };
+  activeCard = c; activeOpts = items; c._finish = finish;
+  return c;
+}
+
+/* ===== Periods ===== */
+const MON = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const SM = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+/* eStatement history: 84 months for Integrated / HKD Current / HKD Savings, 24 months for other accounts */
+const stmtMonths = acc => (acc && acc.months) || 24;
+const yrs = n => n % 12 ? "" : ` (${n / 12} years)`;
+function stmtPeriods(n){
+  // Monthly statements, latest 24 completed months
+  const now = new Date(), out = [];
+  for (let k = 1; k <= n; k++){
+    const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    out.push({title: `${MON[d.getMonth()]} ${d.getFullYear()}`, sub: `1 – ${end} ${SM[d.getMonth()]}`, group: String(d.getFullYear()), y: d.getFullYear(), m: d.getMonth(), short: `${SM[d.getMonth()]}${d.getFullYear()}`});
+  }
+  return out;
+}
+function advPeriods(){
+  // Monthly groupings covering the last 90 days only
+  const now = new Date(); now.setHours(0,0,0,0);
+  const from = new Date(now); from.setDate(from.getDate() - 89);
+  const out = [];
+  let d = new Date(now.getFullYear(), now.getMonth(), 1);
+  while (d >= new Date(from.getFullYear(), from.getMonth(), 1)){
+    const y = d.getFullYear(), m = d.getMonth();
+    const startDay = (y === from.getFullYear() && m === from.getMonth()) ? from.getDate() : 1;
+    const endDay = (y === now.getFullYear() && m === now.getMonth()) ? now.getDate() : new Date(y, m + 1, 0).getDate();
+    out.push({title: `${MON[m]} ${y}`, sub: `${startDay} – ${endDay} ${SM[m]}${endDay === now.getDate() && m === now.getMonth() && y === now.getFullYear() ? " (to date)" : ""}`, y, m, short: `${SM[m]}${y}`});
+    d = new Date(y, m - 1, 1);
+  }
+  return out;
+}
+
+/* ===== 1. Greeting ===== */
+async function greet(returning){
+  state = "GREETING";
+  await bot(returning ? "Of course. What else can I help you with?" : "Hello, and welcome. I'm your Account Assistant. How can I help you today?");
+}
+
+/* ===== 2–3. Intent → choose account ===== */
+async function start(m){
+  mode = m; pick = {};
+  const list = ACCOUNTS.filter(a => mode === "statement" ? a.st : a.adv);
+  await bot(`You can retrieve your ${doc()} here. Start by choosing the account.`);
+  state = "PICK_ACCOUNT";
+  radioCard(`Accounts with ${docs()}`, list.map(a => ({v:a.id, title:a.name, sub:`${a.no} · ${a.ccy}`, echo:`${a.name} (${a.no})`, acc:a})), {
+    allowOther:false, onPick: it => { pick.acc = it.acc; chooseType(); }
+  });
+}
+
+/* ===== 4. Choose statement / advice type ===== */
+async function chooseType(){
+  const types = (mode === "statement" ? STMT_TYPES : ADV_TYPES)[pick.acc.id] || [];
+  await bot(`Thanks. Now choose the ${doc()} you'd like for your ${esc(pick.acc.name)}.`);
+  state = "PICK_TYPE";
+  radioCard(`${docs()} for ${esc(pick.acc.name)}`, types.map(t => ({title:t})), {
+    allowOther:true, onPick: it => it ? (pick.type = it.title, choosePeriod()) : otherType()
+  });
+}
+
+/* ===== 5. Choose period ===== */
+async function choosePeriod(){
+  const st = mode === "statement";
+  const n = stmtMonths(pick.acc);
+  const list = st ? stmtPeriods(n) : advPeriods();
+  await bot(st
+    ? `Got it. eStatements for your ${esc(pick.acc.name)} are issued monthly, and the last <b>${n} months</b>${yrs(n)} are available here. Pick the month you'd like.`
+    : `Got it. eAdvices for your ${esc(pick.acc.name)} are available for the last <b>90 days</b>, grouped by month. Pick the period you'd like.`);
+  state = "PICK_PERIOD";
+  monthPicker(list, it => it ? (pick.period = it, deliver()) : otherPeriod());
+}
+
+/* Period picker: a "Pick a period" box opens a bottom sheet (year switcher + 12-month grid + Confirm). */
+const CAL_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+const ARR_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+function monthPicker(list, onPick){
+  const st = mode === "statement";
+  const key = (y, m) => y * 12 + m;
+  const avail = new Map(list.map(p => [key(p.y, p.m), p]));
+  const years = [...new Set(list.map(p => p.y))].sort((a, b) => a - b);
+  const first = list[list.length - 1], last = list[0];
+  const rangeTxt = st
+    ? `Available: ${SM[first.m]} ${first.y} – ${SM[last.m]} ${last.y}`
+    : `Available: last 90 days (${first.sub.split(" – ")[0]} ${SM[first.m]} – ${last.sub.split(" – ")[1].replace(" (to date)", "")} ${last.y})`;
+  let year = years[years.length - 1], chosen = null, draft = null;
+
+  const c = card(`<button type="button" class="pk" aria-haspopup="dialog"><span class="pki">${CAL_SVG}</span><span class="pkt">Pick a period</span><span class="pka">${ARR_SVG}</span></button>
+    <button class="lnk" type="button" data-other>Can't find the period you need? Choose Other</button>`);
+  const trig = c.querySelector(".pk"), label = c.querySelector(".pkt");
+
+  const sh = $("#sheet"), bd = $("#sheetBd"), grid = sh.querySelector(".grid"), yl = sh.querySelector(".yl"),
+        prev = sh.querySelector("[data-y='-1']"), next = sh.querySelector("[data-y='1']"),
+        note = sh.querySelector(".shn"), ok = sh.querySelector("[data-ok]");
+  const render = () => {
+    yl.textContent = year;
+    prev.disabled = year <= years[0]; next.disabled = year >= years[years.length - 1];
+    grid.innerHTML = SM.map((n, i) => {
+      const can = avail.has(key(year, i)), on = draft && draft.y === year && draft.m === i;
+      return `<button type="button" class="mo${on ? " on" : ""}" data-m="${i}"${can ? "" : " disabled"} aria-label="${MON[i]} ${year}${can ? "" : " (not available)"}" aria-pressed="${on}">${n}</button>`;
+    }).join("");
+    note.textContent = draft ? `${draft.title}: covers ${draft.sub}. ${rangeTxt}` : rangeTxt;
+    ok.disabled = !draft;
+  };
+  const open = () => {
+    draft = chosen; year = chosen ? chosen.y : years[years.length - 1];
+    sh.querySelector(".sht").textContent = st ? "Pick a period" : "Pick a period (last 90 days)";
+    render();
+    bd.hidden = false; sh.hidden = false;
+    requestAnimationFrame(() => { bd.classList.add("on"); sh.classList.add("on"); });
+    setTimeout(() => { try { sh.querySelector(".shx").focus(); } catch(e){} }, 50);
+  };
+  const close = () => {
+    bd.classList.remove("on"); sh.classList.remove("on");
+    setTimeout(() => { bd.hidden = true; sh.hidden = true; }, 220);
+    try { trig.focus(); } catch(e){}
+  };
+  const finish = v => {
+    lock(c); activeCard = null; sheetApi = null;
+    if (v === "other"){ user("Other"); return onPick(null); }
+    label.textContent = v.title; trig.classList.add("set");
+    user(v.title); onPick(v);
+  };
+  sheetApi = {
+    prev: () => { year--; render(); }, next: () => { year++; render(); },
+    pick: m => { draft = avail.get(key(year, m)); render(); },
+    confirm: () => { if (!draft) return; chosen = draft; close(); finish(chosen); },
+    close
+  };
+  trig.onclick = open;
+  c.querySelector("[data-other]").onclick = () => finish("other");
+  c._finish = finish;
+  // Typed month, e.g. "Oct 2026", "october", "10/2026"
+  c._type = (v, l) => {
+    if (/^other\b/.test(l)) return finish("other");
+    let m = SM.findIndex(n => l.includes(n.toLowerCase())), y = (l.match(/\b(20\d{2})\b/) || [])[1];
+    const num = l.match(/^(\d{1,2})\s*[\/\-.]\s*(20\d{2})$/);
+    if (num){ m = +num[1] - 1; y = num[2]; }
+    if (m >= 0){
+      const p = y ? avail.get(key(+y, m)) : list.find(x => x.m === m);
+      if (p){ chosen = p; return finish(p); }
+      user(v); return bot(`Sorry, that month isn't available. ${esc(rangeTxt)}. Tap <b>Pick a period</b> to choose another month, or choose <b>Other</b>.`, "err");
+    }
+    user(v); return bot("Please tap <b>Pick a period</b> above to choose a year and month, then select <b>Confirm</b>. If the period you need isn't there, choose <b>Other</b>.");
+  };
+  activeCard = c;
+  return c;
+}
+let sheetApi = null;
+(function wireSheet(){
+  const sh = $("#sheet"), bd = $("#sheetBd");
+  sh.querySelector("[data-y='-1']").onclick = () => sheetApi && sheetApi.prev();
+  sh.querySelector("[data-y='1']").onclick = () => sheetApi && sheetApi.next();
+  sh.querySelector(".grid").onclick = e => { const b = e.target.closest(".mo"); if (b && !b.disabled && sheetApi) sheetApi.pick(+b.dataset.m); };
+  sh.querySelector("[data-ok]").onclick = () => sheetApi && sheetApi.confirm();
+  sh.querySelector(".shx").onclick = () => sheetApi && sheetApi.close();
+  bd.onclick = () => sheetApi && sheetApi.close();
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !sh.hidden && sheetApi) sheetApi.close(); });
+})();
+
+/* ===== 6. Download box ===== */
+let dlApi = null;
+const dlReady = (async () => { try { dlApi = window.claude && await window.claude.use("downloads"); } catch(e){ dlApi = null; } })();
+const fname = () => `${doc()}_${pick.acc.name.replace(/\W+/g, "")}_${pick.type.replace(/\(.*?\)/g, "").replace(/\W+/g, "")}_${pick.period.short}.pdf`;
+
+async function deliver(){
+  state = "DELIVERED";
+  await bot(`Your ${doc()} for ${esc(pick.period.title)} is ready.`);
+  const name = fname();
+  const c = document.createElement("div"); c.className = "dlw";
+  c.innerHTML = `<button class="pk dl" type="button" aria-label="Click to view and download the document (${esc(name)})"><span class="pki"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3 3 3-3"/></svg></span><span class="pkt">Click to view and download the document</span><span class="pka">${ARR_SVG}</span></button><p class="st" aria-live="polite"></p>`;
+  log.appendChild(c); scroll();
+  const btn = c.querySelector(".dl"), st = c.querySelector(".st");
+  btn.onclick = async () => {
+    await dlReady;
+    if (!dlApi){ st.className = "st bad"; st.textContent = "Downloads aren't available in this view. Open the page on claude.ai to try the download."; return; }
+    st.className = "st"; st.textContent = "Preparing your file…";
+    try {
+      const r = await dlApi.save({filename: name, data: makePdf()});
+      st.className = "st good"; st.textContent = r.status === "delivered" ? "Sent." : "Downloaded.";
+    } catch(e){
+      const code = e && e.code;
+      st.className = "st bad";
+      st.textContent = code === "declined" ? "Download cancelled. Tap the box to try again."
+        : code === "rate_limited" ? "Please wait a moment, then tap the box again."
+        : "Sorry, the download didn't work. Please try again.";
+    }
+  };
+  anythingElse();
+}
+
+/* ===== 7a. "Other" type → clarify → path → live agent ===== */
+async function otherType(){
+  state = "CLARIFY_TYPE";
+  const opts = OTHER_DOCS[mode];
+  await bot(`No problem. What kind of document are you looking for? Choose one below, or type it in your own words.`);
+  quick(opts.map(o => ({label:o.label, go:() => showDocPath(o)})).concat([{label:"None of these", go:noMatch}]));
+}
+async function handleClarify(t){
+  const o = OTHER_DOCS[mode].find(x => x.k.test(t)) || OTHER_DOCS[mode === "statement" ? "advice" : "statement"].find(x => x.k.test(t));
+  if (o) return showDocPath(o);
+  if (/statement/i.test(t) && mode === "advice"){ await bot("It sounds like you're after a statement rather than an advice."); return start("statement"); }
+  if (/advice/i.test(t) && mode === "statement"){ await bot("It sounds like you're after an advice rather than a statement."); return start("advice"); }
+  return noMatch();
+}
+async function showDocPath(o){
+  state = "DOC_PATH";
+  await bot(`I'm sorry, I can't help you retrieve your ${o.label.toLowerCase()} here. You can view it on the <b>${o.page}</b> page.<p class="pp">To get there, go to <b>${o.path}</b>.</p>`);
+  await bot("Is this what you were looking for?");
+  state = "CONFIRM_PATH";
+  quick([{label:"Yes, thanks", go:anythingElse}, {label:"No", p:false, go:noMatch}]);
+}
+async function noMatch(){
+  state = "LIVE_AGENT_OFFER";
+  await bot("I'm sorry I couldn't find the document you need. Would you like me to escalate this to a live agent?", "err");
+  quick([{label:"Escalate to live agent", p:true, go:handoff}, {label:"No, thanks", go:anythingElse}]);
+}
+async function handoff(){
+  state = "LIVE_AGENT_HANDOFF";
+  await bot("Connecting you to a live agent now. Please stay in the chat. Your conversation so far will be shared so you don't need to repeat yourself.");
+}
+
+/* ===== Unclear request → eStatement / eAdvice / Something else ===== */
+const GENERAL_DOCS = OTHER_DOCS.statement.slice(0, 4);   // max 4 shown for reference
+let seenOther = false;
+const isElse = l => /something else|^else\b|^other\b|none|neither|not (these|this|listed)|^no\b/.test(l);
+async function clarifyIntent(sorry){
+  state = "AWAIT_WHICH";
+  await bot((sorry ? "Sorry, I'm not sure what you need. " : "") + "I can help you retrieve an eStatement or an eAdvice. Which would you like?");
+  quick([
+    {label:"eStatement", go:() => start("statement"), echo:"I want to get statement for my account"},
+    {label:"eAdvice", go:() => start("advice"), echo:"I want to retrieve advice"},
+    {label:"Something else", go:somethingElse}
+  ]);
+}
+async function somethingElse(){
+  if (seenOther) return noMatch();          // asked for something else again → live agent
+  seenOther = true; state = "PICK_GENERAL_DOC";
+  await bot(`No problem. Here are some other documents I can help you find:<ol class="ol">${GENERAL_DOCS.map(o => `<li>${o.label}</li>`).join("")}</ol>Please type the one you'd like, for example <b>1</b> or <b>${GENERAL_DOCS[1].label.split(" ")[0]}</b>. If it isn't listed, type <b>something else</b>.`);
+}
+function matchGeneral(l){
+  const n = parseInt(l, 10);
+  if (/^\d+$/.test(l.trim()) && n >= 1 && n <= GENERAL_DOCS.length) return GENERAL_DOCS[n - 1];
+  return GENERAL_DOCS.find(o => o.k.test(l)) || null;
+}
+async function showGeneralPath(o){
+  state = "GENERAL_PATH";
+  await bot(`I'm sorry, I can't help you retrieve your ${o.label.toLowerCase()} here. You can view it on the <b>${o.page}</b> page.<p class="pp">To get there, go to <b>${o.path}</b>.</p>`);
+  anythingElse();
+}
+
+/* ===== 7b. "Other" period → request page ===== */
+async function otherPeriod(){
+  state = "PERIOD_PATH";
+  await bot(mode === "statement"
+    ? `I'm sorry, I can't help you retrieve statements older than ${stmtMonths(pick.acc)} months for your ${esc(pick.acc.name)} here. You can submit a request for them on the <b>Request for Bank Account Letters / Transaction Record</b> page.<p class="pp">To get there, go to <b>${REQ_PAGE.path}</b>.</p>`
+    : `I'm sorry, I can't help you retrieve eAdvices older than 90 days here. You can submit a request for a transaction record on the <b>Request for Bank Account Letters / Transaction Record</b> page.<p class="pp">To get there, go to <b>${REQ_PAGE.path}</b>.</p>`);
+  anythingElse();
+}
+
+
+/* ===== Closure ===== */
+async function anythingElse(){
+  state = "ANYTHING_ELSE";
+  await bot("Is there anything else I can help you with today?");
+  quick([
+    {label:"Statement", go:() => start("statement"), echo:"I want to get statement for my account"},
+    {label:"Advice", go:() => start("advice"), echo:"I want to retrieve advice"},
+    {label:"Something else", go:somethingElse},
+    {label:"No, that's all", go:end}
+  ]);
+}
+async function end(){ state = "END_SESSION"; await bot("Thank you for banking with us. Have a great day!"); }
+
+/* ===== Typed input routing ===== */
+function intentOf(l){
+  if (/advi[cs]e/.test(l)) return "advice";
+  if (/statement|stmt/.test(l)) return "statement";
+  return null;
+}
+$("#form").onsubmit = e => { e.preventDefault(); send(); };
+async function send(){
+  const v = txt.value.trim(); if (!v || busy) return; txt.value = "";
+  const l = v.toLowerCase();
+  // Typing while a radio list is open: accept "other" or an option number
+  if (activeCard && activeCard._type && /^PICK_/.test(state)){ lockAll(); return activeCard._type(v, l); }
+  if (activeCard && /^PICK_/.test(state)){
+    const n = parseInt(l, 10);
+    if (/^other\b/.test(l) && state !== "PICK_ACCOUNT"){ log.querySelectorAll(":scope > .row button").forEach(x => x.disabled = true); return activeCard._finish("other"); }
+    if (n >= 1 && n <= activeOpts.length && /^\d+$/.test(l)) return activeCard._finish(n - 1);
+    user(v);
+    return bot(`Please choose one option from the list above, then select <b>Continue</b>.${state !== "PICK_ACCOUNT" ? " If what you need isn't listed, choose <b>Other</b>." : ""}`);
+  }
+  lockAll(); user(v);
+  if (state === "CLARIFY_TYPE") return handleClarify(v);
+  if (state === "CONFIRM_PATH"){
+    if (/^(y|yes)/.test(l)) return anythingElse();
+    if (/^(n|no)/.test(l)) return noMatch();
+  }
+  if (state === "LIVE_AGENT_OFFER"){
+    if (/^(y|yes)|agent|escalate/.test(l)) return handoff();
+    if (/^(n|no)\b/.test(l)) return anythingElse();
+  }
+  if (state === "PICK_GENERAL_DOC"){
+    const o = matchGeneral(l);
+    if (o) return showGeneralPath(o);
+    if (isElse(l) || intentOf(l) === null && /something/.test(l)) return noMatch();
+    const it0 = intentOf(l); if (it0) return start(it0);
+    return bot(`Sorry, I couldn't match that. Please type <b>1</b> to <b>${GENERAL_DOCS.length}</b>, or the name of the document. If it isn't listed, type <b>something else</b>.`);
+  }
+  if (state === "ANYTHING_ELSE" && /^(n|no)\b(?!ne)/.test(l) && !/something/.test(l)) return end();
+  const it = intentOf(l);
+  if (it) return start(it);
+  if (/agent|human|person|staff/.test(l)) return noMatch();
+  if (/something else|^other\b|^else\b/.test(l)) return somethingElse();
+  clarifyIntent(!/document|record|letter|e-?doc|help|hi|hello/.test(l));
+}
+$("#chipS").onclick = () => { if (busy) return; txt.value = "I want to get statement for my account"; send(); };
+$("#chipA").onclick = () => { if (busy) return; txt.value = "I want to retrieve advice"; send(); };
+$("#restart").onclick = () => { if (sheetApi) sheetApi.close(); sheetApi = null; log.innerHTML = ""; activeCard = null; pick = {}; seenOther = false; greet(false); };
+greet(false);
+
+/* ===== Sample PDF (prototype placeholder, not a real bank document) ===== */
+function makePdf(){
+  const p = pick, gen = new Date();
+  const pe = s => String(s).replace(/[^\x20-\x7e]/g, "*").replace(/([\\()])/g, "\\$1");
+  const lines = [
+    ["F2",18,`SAMPLE ${doc().toUpperCase()}`],
+    ["F1",10,"Prototype placeholder - not a real bank document."],
+    ["F1",10," "],
+    ["F2",11,"Account"], ["F1",11,`${p.acc.name}  ${p.acc.no}  (${p.acc.ccy})`],
+    ["F1",10," "],
+    ["F2",11,"Document"], ["F1",11,p.type],
+    ["F1",10," "],
+    ["F2",11,"Period"], ["F1",11,`${p.period.title}  (${p.period.sub})`],
+    ["F1",10," "],
+    ["F1",10,`Generated ${gen.getDate()} ${SM[gen.getMonth()]} ${gen.getFullYear()} by the Account Assistant prototype.`]
+  ];
+  let y = 790, body = "";
+  lines.forEach(([f, s, t]) => { body += `BT /${f} ${s} Tf 56 ${y} Td (${pe(t)}) Tj ET\n`; y -= s + 8; });
+  body += "0.86 0 0.07 RG 2 w 56 800 m 539 800 l S\n";
+  const objs = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+    `<< /Length ${body.length} >>\nstream\n${body}endstream`
+  ];
+  let out = "%PDF-1.4\n", offs = [];
+  objs.forEach((o, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const x = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(n => String(n).padStart(10, "0") + " 00000 n \n").join("");
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;
+  return out;
+}
+
+/* Fit the visible area on every phone, including when the on-screen keyboard is open */
+(function fitViewport(){
+  const vv = window.visualViewport;
+  const set = () => {
+    const h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty("--app-h", h + "px");
+    if (vv) window.scrollTo(0, 0);
+  };
+  set();
+  (vv || window).addEventListener("resize", () => { set(); scroll(); });
+  window.addEventListener("orientationchange", () => setTimeout(set, 250));
+  txt.addEventListener("focus", () => setTimeout(() => { set(); scroll(); }, 300));
+})();
+</script>
+</body>
+</html>
